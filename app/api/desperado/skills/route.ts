@@ -62,6 +62,9 @@ const parseSourceKeys = (raw: string | null): SourceKey[] => {
 
 const resolveSkillTrigger = (skill: SkillDesperado) => skill.skill_trigger;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const q = params.get("q")?.trim() ?? "";
@@ -125,9 +128,11 @@ export async function GET(request: NextRequest) {
     sourceKeys.map((key) => `${key.itemElement}|${key.itemName}|${key.itemRarity}`),
   );
 
-  const skills = (data ?? []).map((row) =>
-    normalizeSkillDesperadoRow(row as Record<string, unknown>),
-  );
+  const rows = (data ?? []) as unknown[];
+
+  const skills = rows
+    .filter(isRecord)
+    .map((row) => normalizeSkillDesperadoRow(row));
 
   const filtered = skills.filter((skill: SkillDesperado) => {
     const trigger = resolveSkillTrigger(skill);
