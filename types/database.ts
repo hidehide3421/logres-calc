@@ -1,0 +1,108 @@
+// ジョブステータス
+export interface AbilityDesperado {
+  lv_range: string;
+  lv_range_min: number;
+  lv_range_max: number;
+  core_base: number;
+  crit_multipuler: number;
+  normal_hits_plus: number;
+  native_opening_skill: boolean;
+  native_random_skill: boolean;
+}
+
+// アイテム
+export interface ItemDesperado {
+  id: string;
+  item_category: string;
+  item_series: string;
+  item_legacy: string;
+  item_element: string;
+  item_name: string;
+  item_rarity: string;
+}
+
+// スキル
+export interface SkillDesperado {
+  id: string;
+  item_element: string; 
+  item_name: string;
+  item_rarity: string;
+  // DBメタ情報
+  skill_format?: string;
+  skill_name: string;
+  skill_trigger: string;
+  skill_category: string;
+  skill_element: string;
+  skill_color?: string;
+  skill_type?: string;
+  skill_range?: string;
+  is_magicbullet: boolean;
+  is_shifted: boolean;
+  top_element_affected: boolean;
+  is_haken: boolean;
+  is_hasou: boolean;
+  is_gouki: boolean;
+  is_auto?: boolean;
+  is_hissatsu: boolean;
+  is_kakusei: boolean;
+  is_integer: boolean;
+  size_min: number;
+  size_max: number;
+  // 効果パラメータ（ソース管理）
+  burstStrikeName: string;
+  coreBaseOwnAnywhere: number;
+  coreBaseOwnAnywherePerHissatsuLv: number;
+  corePlusOwnHasou: number;
+  corePlusOwnHasouPerHissatsuLv: number;
+  coreSpecialBaseOwnAnywhere: number;
+  coreSpecialBaseOwnHakenHasouKakusei: number;
+  coreSpecialBaseOwnPureHasouHissatsu: number;
+  coreSpecialBaseArtifactSetSkillSelf: number;
+  coreSpecialBaseSkillSelf: number;
+  coreSpecialPlusOwnAnywhere: number;
+  coreSpecialPlusSkillSelf: number;
+  coreSpecialPlusSkillSelfPerHissatsuLv: number;
+  coreSpecialPlusSkillSelfAtMana40: number;
+  skillMultiplierSkillSelf: number;
+  skillMultiplierSkillSelfPerHissatsuLv: number;
+  skillMultiplierSkillSelfPerHeroLv: number;
+  damageCapSkillSelf: number;
+  normalHitsSkillSelf: number;
+  normalHitsPlusOwnAnywhere: number;
+  normalHitsPlusOwnAttack: number;
+  normalHitsPlusOwnHasouAttack: number;
+  normalHitsPlusSkillSelf: number;
+  normalHitsPlusOwnSideAnywhere: number;
+  specialHitsPlusArtifactSetSkillSelf: number;
+  bcBaseOwnSideAnywhere: number;
+  bcBaseSkillSelfPrior: number;
+  bcPlusOwnAnywhere: number;
+  bcPlusOwnHasou: number;
+  bcPlusOwnPureHasouHissatsu: number;
+  bcPlusArtifactSetSkillSelf: number;
+  bcPlusSkillSelf: number;
+  bcPlusSkillSelfPerHissatsuLv: number;
+  bcPlusSkillSelfPerMana: number;
+  bcPlusOwnSideHasou: number;
+  bcCapSkillSelf: number;
+  bcHitsOwnAnywhere: number;
+  bcHitsSkillSelfPrior: number;
+  followSamePhysicOwnWeaponActiveSingle: number;
+  followSamePhysicHitsOwnWeaponActiveSingle: number;
+  followSamePhysicTimesOwnWeaponActiveSingle: number;
+  followTriggerPhysicOwnWeaponActiveSingle: number;
+  followTriggerPhysicHitsOwnWeaponActiveSingle: number;
+  followTriggerPhysicTimesOwnWeaponActiveSingle: number;
+  followSamePhysicOwnHakenHasouKakusei: number;
+  followSamePhysicHitsOwnHakenHasouKakusei: number;
+  followSamePhysicTimesOwnHakenHasouKakusei: number;
+  followSamePhysicOwnPureHasouHissatsu: number;
+  followSamePhysicHitsOwnPureHasouHissatsu: number;
+  followSamePhysicTimesOwnPureHasouHissatsu: number;
+  followSamePhysicSkillSelf: number;
+  followSamePhysicHitsSkillSelf: number;
+  followSamePhysicTimesSkillSelf: number;
+  followSameMagicOwnSideWeaponActiveSingle: number;
+  followSameMagicHitsOwnSideWeaponActiveSingle: number;
+  followSameMagicTimesOwnSideWeaponActiveSingle: number;
+}
