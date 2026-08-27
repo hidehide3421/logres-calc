@@ -641,26 +641,26 @@ export default function DesperadoPage() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-8 p-4 md:p-8">
       <div className="rounded-2xl bg-slate-950 p-6 text-white shadow-xl">
-        <h1 className="text-xl font-bold tracking-wide">デスペラード ダメージ計算機</h1>
+        <h1 className="text-xl font-bold tracking-wide">デスペラード ダメージ火力リミット計算機</h1>
         <p className="mt-1 text-sm text-slate-300">
-          document要件に沿って、装備・スキル・マナ条件から出力を算出します。
+          機能説明: ①クリティカル時を前提にした本撃、②追撃、③これら2つの合計のダメージ火力値(Limit到達時)を計算し、①~③それぞれの結果を表示する
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-slate-900/70 p-4">
-            <div className="text-xs text-slate-400">合計出力</div>
+            <div className="text-xs text-slate-400">合計ダメージ</div>
             <div className="mt-1 text-3xl font-bold text-orange-300">
               {formatNumber(result?.grossLimit ?? 0)}
             </div>
           </div>
           <div className="rounded-lg bg-slate-900/70 p-4">
-            <div className="text-xs text-slate-400">ブラッククリティカル出力</div>
+            <div className="text-xs text-slate-400">本撃ダメージ</div>
             <div className="mt-1 text-2xl font-semibold text-amber-200">
               {formatNumber(result?.blackCritLimit ?? 0)}
             </div>
           </div>
           <div className="rounded-lg bg-slate-900/70 p-4">
-            <div className="text-xs text-slate-400">追撃値</div>
+            <div className="text-xs text-slate-400">追撃ダメージ</div>
             <div className="mt-1 text-2xl font-semibold text-cyan-200">
               {formatNumber(result?.followUpLimit ?? 0)}
             </div>
