@@ -999,7 +999,7 @@ export default function DesperadoPage() {
                 attackOnly
                 includeFree={false}
                 onSelect={setTargetSkill}
-                placeholder="計算対象の攻撃スキルを検索"
+                placeholder="スキルを検索"
               />
             </div>
           </div>
@@ -1011,9 +1011,9 @@ export default function DesperadoPage() {
           )}
         </section>
 
-        {result && (
+        {/* {result && (
           <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <h2 className="text-base font-bold text-slate-900">計算ログ</h2>
+            <h2 className="text-base font-bold text-slate-900">計算ログ(検証用)</h2>
             <div className="mt-2 grid gap-2 text-sm text-slate-700 md:grid-cols-3">
               <div>核リミット: {formatNumber(result.coreLimit)}</div>
               <div>1Hit標準リミット: {formatNumber(result.normalLimitSingle)}</div>
@@ -1021,7 +1021,7 @@ export default function DesperadoPage() {
               <div>有効ヒット数: {formatNumber(result.effectiveHits)}</div>
             </div>
           </section>
-        )}
+        )} */}
       </div>
     </div>
   );
