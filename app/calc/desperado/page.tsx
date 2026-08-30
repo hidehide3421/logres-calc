@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ItemSearch } from "@/components/calc/ItemSearch";
 import { SkillSearch } from "@/components/calc/SkillSearch";
 import { Button } from "@/components/ui/button";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { calculateDesperado } from "@/lib/calculator/desperado";
 import type {
   AbilityDesperado,
@@ -939,7 +940,10 @@ export default function DesperadoPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">起動しているスキル</h2>
+          <h2 className="flex items-center gap-1.5 text-lg font-bold text-slate-900">
+            起動しているスキル
+            <InfoTooltip content="戦闘中すでに起動しているスキルであり、計算対象の攻撃スキルに適用させたい強化効果などをもつスキル。" />
+          </h2>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <SkillSearch
               sourceItems={equippedItems}
