@@ -17,14 +17,7 @@ const SKILL_LEVEL_OPTIONS = [1, 2, 3, 4, 5] as const;
 const ELEMENT_OPTIONS = [NONE_LABEL, "火", "水", "風", "土", "光", "闇", "無"];
 const RARITY_OPTIONS = [NONE_LABEL, "究極", "伝説", "英雄"];
 const ITEM_LV_ULTIMATE = ["1~69", "70~89", "90~109", "110~129", "130"];
-const ITEM_LV_LEGEND_HERO = [
-  "1~69",
-  "70~89",
-  "90~109",
-  "110~129",
-  "130~139",
-  "140",
-];
+const ITEM_LV_LEGEND_HERO = ["1~69", "70~89", "90~109", "110~129", "130~139", "140"];
 const STATUS_KEYS = [
   "HP",
   "物攻",
@@ -640,6 +633,22 @@ export default function DesperadoPage() {
   };
 
   return (
+    <div className="relative">
+      <div className="fixed left-1/2 top-4 z-50 w-28 -translate-x-1/2">
+        <Button
+          type="button"
+          className={`w-full py-7 text-xl font-bold shadow-lg ${
+            canCalculate
+              ? "bg-orange-600 hover:bg-orange-500"
+              : "bg-slate-400 hover:bg-slate-400"
+          }`}
+          disabled={!canCalculate}
+          onClick={handleCalculate}
+        >
+          計算開始
+        </Button>
+      </div>
+
     <div className="mx-auto w-full max-w-7xl space-y-8 p-4 md:p-8">
       <div className="rounded-2xl bg-slate-950 p-6 text-white shadow-xl">
         <h1 className="text-xl font-bold tracking-wide">デスペラード ダメージ火力リミット計算機</h1>
@@ -665,19 +674,6 @@ export default function DesperadoPage() {
           </div>
         </div>
       </div>
-
-      <Button
-        type="button"
-        className={`w-full py-7 text-xl font-bold ${
-          canCalculate
-            ? "bg-orange-600 hover:bg-orange-500"
-            : "bg-slate-400 hover:bg-slate-400"
-        }`}
-        disabled={!canCalculate}
-        onClick={handleCalculate}
-      >
-        計算開始
-      </Button>
 
       {validationMessages.length > 0 && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -1023,6 +1019,7 @@ export default function DesperadoPage() {
             </div>
           </section>
         )} */}
+      </div>
       </div>
     </div>
   );
