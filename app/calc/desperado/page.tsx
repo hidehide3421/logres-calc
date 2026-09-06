@@ -112,6 +112,9 @@ const createInitialStatus = (): StatusValues =>
 const formatNumber = (value: number) => new Intl.NumberFormat("ja-JP").format(value);
 
 export default function DesperadoPage() {
+  const [activeColumn, setActiveColumn] = useState<"left" | "middle" | "right">("left");
+  const [activeWeaponPanel, setActiveWeaponPanel] = useState<"main" | "additional">("main");
+  const [slotAccordionState, setSlotAccordionState] = useState<Record<string, boolean>>({});
   const [jobLevel, setJobLevel] = useState(120);
   const [ability, setAbility] = useState<AbilityDesperado | null>(null);
   const [abilityLoading, setAbilityLoading] = useState(true);
@@ -302,7 +305,7 @@ export default function DesperadoPage() {
         dynamic.add(skill.item_name);
       }
     });
-    return [NONE_LABEL, "(normal)", ...Array.from(dynamic).sort((a, b) => a.localeCompare(b, "ja"))];
+    return [NONE_LABEL, "(無指名のバースト)", ...Array.from(dynamic).sort((a, b) => a.localeCompare(b, "ja"))];
   }, [activeSkills]);
   const effectiveBurstStrike = burstStrikeOptions.includes(burstStrike)
     ? burstStrike
@@ -409,6 +412,22 @@ export default function DesperadoPage() {
     setActiveSkills((previous) => previous.filter((_, skillIndex) => skillIndex !== index));
   };
 
+  const getDefaultAccordionExpanded = (accordionKey: string) => {
+    const isWeaponSlot =
+      accordionKey.startsWith("main-") || accordionKey.startsWith("additional-");
+    return isWeaponSlot && accordionKey.endsWith("-0");
+  };
+
+  const getIsAccordionExpanded = (accordionKey: string) =>
+    slotAccordionState[accordionKey] ?? getDefaultAccordionExpanded(accordionKey);
+
+  const toggleAccordionByKey = (accordionKey: string) => {
+    setSlotAccordionState((previous) => ({
+      ...previous,
+      [accordionKey]: !(previous[accordionKey] ?? getDefaultAccordionExpanded(accordionKey)),
+    }));
+  };
+
   const renderSlot = (
     slot: EquipmentSlot,
     setter:
@@ -419,17 +438,50 @@ export default function DesperadoPage() {
     categoryOptions: string[],
     includeArtifacts: boolean,
     fixedCategory?: string,
+    categoryLabel = "アイテム種",
+    accordionKey?: string,
   ) => {
     const itemLvOptions =
       slot.filters.rarity === "究極" ? ITEM_LV_ULTIMATE : ITEM_LV_LEGEND_HERO;
+    const isAccordion = Boolean(accordionKey);
+    const isExpanded = accordionKey ? getIsAccordionExpanded(accordionKey) : true;
+    const toggleAccordion = () => {
+      if (!accordionKey) {
+        return;
+      }
+      toggleAccordionByKey(accordionKey);
+    };
 
     return (
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-        <h5 className="font-semibold text-slate-900">{title}</h5>
+        {isAccordion ? (
+          <button
+            type="button"
+            onClick={toggleAccordion}
+            className="flex w-full items-center gap-2 text-left font-semibold text-slate-900"
+            aria-expanded={isExpanded}
+          >
+            <svg
+              viewBox="0 0 20 20"
+              className={`h-4 w-4 shrink-0 transition-transform ${
+                isExpanded ? "rotate-180" : "rotate-0"
+              }`}
+              aria-hidden="true"
+            >
+              <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>{title}</span>
+          </button>
+        ) : (
+          <h5 className="font-semibold text-slate-900">{title}</h5>
+        )}
 
-        <div className="grid gap-3 md:grid-cols-4">
+        {isExpanded && (
+          <>
+
+        <div className="grid gap-3 md:grid-cols-3">
           <label className="space-y-1 text-sm">
-            <span>武器種</span>
+            <span>{categoryLabel}</span>
             <select
               className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
               value={fixedCategory ?? slot.filters.category}
@@ -444,18 +496,6 @@ export default function DesperadoPage() {
                 </option>
               ))}
             </select>
-          </label>
-
-          <label className="space-y-1 text-sm">
-            <span>シリーズ名</span>
-            <input
-              className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-              value={slot.filters.series}
-              onChange={(event) =>
-                updateSlotFilters(setter, index, { series: event.target.value })
-              }
-              placeholder="任意で絞り込み"
-            />
           </label>
 
           <label className="space-y-1 text-sm">
@@ -493,7 +533,18 @@ export default function DesperadoPage() {
           </label>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-1 text-sm">
+            <span>シリーズ名</span>
+            <input
+              className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
+              value={slot.filters.series}
+              onChange={(event) =>
+                updateSlotFilters(setter, index, { series: event.target.value })
+              }
+              placeholder="任意で絞り込み"
+            />
+          </div>
+
           <div className="space-y-1 text-sm">
             <span>アイテム名</span>
             <ItemSearch
@@ -506,7 +557,7 @@ export default function DesperadoPage() {
             />
           </div>
 
-          <label className="space-y-1 text-sm">
+          <div className="space-y-1 text-sm">
             <span>アイテムLv</span>
             <select
               className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
@@ -521,8 +572,7 @@ export default function DesperadoPage() {
                 </option>
               ))}
             </select>
-          </label>
-        </div>
+          </div>
 
         <div className="grid gap-3 md:grid-cols-4">
           <label className="space-y-1 text-sm">
@@ -603,13 +653,13 @@ export default function DesperadoPage() {
         </div>
 
         {includeArtifacts && (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3">
             <div className="space-y-1 text-sm">
               <span>装着アーティファクト1/2</span>
               <ItemSearch
                 category="アーティファクト"
                 onSelect={(item) => updateSlot(setter, index, { artifact1: item })}
-                placeholder="アーティファクトを検索"
+                placeholder="検索"
               />
             </div>
             <div className="space-y-1 text-sm">
@@ -617,16 +667,12 @@ export default function DesperadoPage() {
               <ItemSearch
                 category="アーティファクト"
                 onSelect={(item) => updateSlot(setter, index, { artifact2: item })}
-                placeholder="アーティファクトを検索"
+                placeholder="検索"
               />
             </div>
           </div>
         )}
-
-        {slot.item && (
-          <p className="text-xs text-slate-600">
-            選択中: {slot.item.item_name} / {slot.item.item_element} / {slot.item.item_rarity}
-          </p>
+          </>
         )}
       </div>
     );
@@ -651,7 +697,7 @@ export default function DesperadoPage() {
 
     <div className="mx-auto w-full max-w-7xl space-y-8 p-4 md:p-8">
       <div className="rounded-2xl bg-slate-950 p-6 text-white shadow-xl">
-        <h1 className="text-xl font-bold tracking-wide">デスペラード ダメージ火力リミット計算機</h1>
+        <h1 className="text-xl font-bold tracking-wide">計算結果</h1>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-slate-900/70 p-4">
@@ -661,13 +707,13 @@ export default function DesperadoPage() {
             </div>
           </div>
           <div className="rounded-lg bg-slate-900/70 p-4">
-            <div className="text-xs text-slate-400">本撃ダメージ</div>
+            <div className="text-xs text-slate-400">本撃</div>
             <div className="mt-1 text-2xl font-semibold text-amber-200">
               {formatNumber(result?.blackCritLimit ?? 0)}
             </div>
           </div>
           <div className="rounded-lg bg-slate-900/70 p-4">
-            <div className="text-xs text-slate-400">追撃ダメージ</div>
+            <div className="text-xs text-slate-400">追撃</div>
             <div className="mt-1 text-2xl font-semibold text-cyan-200">
               {formatNumber(result?.followUpLimit ?? 0)}
             </div>
@@ -686,327 +732,463 @@ export default function DesperadoPage() {
         </div>
       )}
 
-      <div className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm">
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">基本設定</h2>
-          <div className="grid gap-3 md:grid-cols-4">
-            <label className="space-y-1 text-sm">
-              <span>ジョブLv</span>
-              <input
-                type="number"
-                min={1}
-                max={120}
-                value={jobLevel}
-                onChange={(event) => setJobLevel(Number(event.target.value || 0))}
-                className="w-full rounded-md border border-slate-300 px-2 py-2"
-              />
-            </label>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm">
+        <div className="mb-6 grid grid-cols-3 gap-2 xl:hidden">
+          <Button
+            type="button"
+            variant={activeColumn === "left" ? "default" : "outline"}
+            onClick={() => setActiveColumn("left")}
+          >
+            スキル / 基本データ
+          </Button>
+          <Button
+            type="button"
+            variant={activeColumn === "middle" ? "default" : "outline"}
+            onClick={() => setActiveColumn("middle")}
+          >
+            武器 / シックスセンス
+          </Button>
+          <Button
+            type="button"
+            variant={activeColumn === "right" ? "default" : "outline"}
+            onClick={() => setActiveColumn("right")}
+          >
+            防具 / エンブレム
+          </Button>
+        </div>
 
-            <label className="space-y-1 text-sm">
-              <span>攻撃属性マナ数 (0〜70)</span>
-              <input
-                type="number"
-                min={0}
-                max={70}
-                value={manaCount}
-                onChange={(event) => {
-                  const nextValue = Number(event.target.value || 0);
-                  setManaCount(nextValue);
-                  if (nextValue === 0) {
-                    setManaEnhanced(false);
-                  }
-                }}
-                className="w-full rounded-md border border-slate-300 px-2 py-2"
-              />
-            </label>
-
-            <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm md:col-span-2">
-              <input
-                type="checkbox"
-                checked={manaEnhanced}
-                disabled={manaCount === 0}
-                onChange={(event) => setManaEnhanced(event.target.checked)}
-              />
-              <span>
-                攻撃属性マナ強化: {manaEnhanced ? "有" : "無"}
-              </span>
-            </label>
-          </div>
-
-          <div className="text-xs text-slate-600">
-            能力情報: {abilityLoading ? "取得中..." : ability ? `適用中 (${ability.lv_range})` : "未取得"}
-          </div>
-          {!abilityLoading && abilityError && (
-            <div className="text-xs text-red-600">能力情報エラー: {abilityError}</div>
-          )}
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">main武器 1/5〜5/5</h2>
-          <div className="space-y-3">
-            {mainSlots.map((slot, index) => (
-              <div key={`main-${index}`}>
-                {renderSlot(
-                  slot,
-                  setMainSlots,
-                  index,
-                  `main武器 ${index + 1}/5`,
-                  MAIN_WEAPON_CATEGORIES,
-                  true,
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">メダル</h2>
-          <div className="space-y-1 text-sm md:max-w-xl">
-            <span>メダル</span>
-            <ItemSearch
-              category="メダル"
-              onSelect={setMedal}
-              placeholder="メダルを検索"
-            />
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">additional武器 1/5〜5/5</h2>
-          <div className="space-y-3">
-            {additionalSlots.map((slot, index) => (
-              <div key={`additional-${index}`}>
-                {renderSlot(
-                  slot,
-                  setAdditionalSlots,
-                  index,
-                  `additional武器 ${index + 1}/5`,
-                  ADDITIONAL_WEAPON_CATEGORIES,
-                  false,
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">防具・アクセサリ</h2>
-          <div className="space-y-3">
-            {renderSlot(upperArmor, setUpperArmor, null, "上防具", ["上"], false, "上")}
-            {renderSlot(lowerArmor, setLowerArmor, null, "下防具", ["下"], false, "下")}
-            {renderSlot(headAccessory, setHeadAccessory, null, "頭アクセ", ["頭"], false, "頭")}
-            {renderSlot(armAccessory, setArmAccessory, null, "腕アクセ", ["腕"], false, "腕")}
-            {renderSlot(footAccessory, setFootAccessory, null, "足アクセ", ["足"], false, "足")}
-          </div>
-        </section>
-
-        <section className="space-y-1">
-          <h2 className="text-lg font-bold text-slate-900">エンブレム</h2>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <h3 className="font-semibold">SPエンブレム</h3>
-            <ItemSearch
-              category="エンブレム"
-              series="SP"
-              onSelect={(item) =>
-                setSpEmblem((previous) => ({ ...previous, item }))
-              }
-              placeholder="SPエンブレムを検索"
-            />
-
-            {spEmblem.effects.map((effect, effectIndex) => (
-              <div key={`sp-effect-${effectIndex}`} className="grid gap-2 md:grid-cols-2">
-                <select
-                  className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-                  value={effect.effect}
-                  onChange={(event) =>
-                    setSpEmblem((previous) => ({
-                      ...previous,
-                      effects: previous.effects.map((entry, index) =>
-                        index === effectIndex
-                          ? { ...entry, effect: event.target.value }
-                          : entry,
-                      ),
-                    }))
-                  }
-                  disabled={!spEmblem.item}
-                >
-                  {EMBLEM_EFFECT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-                  placeholder="効果量"
-                  value={effect.amount}
-                  onChange={(event) =>
-                    setSpEmblem((previous) => ({
-                      ...previous,
-                      effects: previous.effects.map((entry, index) =>
-                        index === effectIndex
-                          ? { ...entry, amount: event.target.value }
-                          : entry,
-                      ),
-                    }))
-                  }
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <h3 className="font-semibold">EXエンブレム</h3>
-            <ItemSearch
-              category="エンブレム"
-              series="EX"
-              onSelect={(item) =>
-                setExEmblem((previous) => ({ ...previous, item }))
-              }
-              placeholder="EXエンブレムを検索"
-            />
-
-            {exEmblem.effects.map((effect, effectIndex) => (
-              <div key={`ex-effect-${effectIndex}`} className="grid gap-2 md:grid-cols-2">
-                <select
-                  className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-                  value={effect.effect}
-                  onChange={(event) =>
-                    setExEmblem((previous) => ({
-                      ...previous,
-                      effects: previous.effects.map((entry, index) =>
-                        index === effectIndex
-                          ? { ...entry, effect: event.target.value }
-                          : entry,
-                      ),
-                    }))
-                  }
-                  disabled={!exEmblem.item}
-                >
-                  {EMBLEM_EFFECT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-                  placeholder="効果量"
-                  value={effect.amount}
-                  onChange={(event) =>
-                    setExEmblem((previous) => ({
-                      ...previous,
-                      effects: previous.effects.map((entry, index) =>
-                        index === effectIndex
-                          ? { ...entry, amount: event.target.value }
-                          : entry,
-                      ),
-                    }))
-                  }
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <h3 className="mb-2 font-semibold">エンブレムステータス（14種）</h3>
-            <div className="grid gap-2 md:grid-cols-8">
-              {STATUS_KEYS.map((statusKey) => (
-                <label key={statusKey} className="space-y-1 text-sm">
-                  <span>{statusKey}</span>
+        <div className="grid gap-8 xl:grid-cols-3 xl:max-h-[calc(100vh-12rem)]">
+          <div
+            className={`space-y-8 xl:max-h-[calc(100vh-12rem)] xl:overflow-y-auto xl:pr-2 ${
+              activeColumn === "left" ? "block" : "hidden"
+            } xl:block`}
+          >
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-900">ジョブ情報</h2>
+              <div className="grid gap-3 w-20">
+                <label className="space-y-1 text-sm">
+                  <span>Lv</span>
                   <input
-                    className="w-full rounded-md border border-slate-300 bg-white px-2 py-2"
                     type="number"
-                    value={statusValues[statusKey]}
-                    onChange={(event) =>
-                      setStatusValues((previous) => ({
-                        ...previous,
-                        [statusKey]: Number(event.target.value || 0),
-                      }))
-                    }
+                    min={1}
+                    max={120}
+                    value={jobLevel}
+                    onChange={(event) => setJobLevel(Number(event.target.value || 0))}
+                    className="w-full rounded-md border border-slate-300 px-2 py-2"
                   />
                 </label>
-              ))}
-            </div>
-          </div>
-        </section>
+              </div>
+              {!abilityLoading && abilityError && (
+                <div className="text-xs text-red-600">能力情報エラー: {abilityError}</div>
+              )}
+            </section>
 
-        <section className="space-y-3">
-          <h2 className="flex items-center gap-1.5 text-lg font-bold text-slate-900">
-            起動しているスキル
-            <InfoTooltip content="戦闘中すでに起動しているスキルであり、計算対象の攻撃スキルに適用させたい強化効果などをもつスキル。" />
-          </h2>
-          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <SkillSearch
-              sourceItems={equippedItems}
-              ownOnly={false}
-              includeFree
-              onSelect={setActiveSkillDraft}
-              placeholder="スキルを検索"
-            />
-            <Button type="button" onClick={addActiveSkill} disabled={!activeSkillDraft}>
-              追加
-            </Button>
-          </div>
+            <section className="space-y-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <h2 className="text-base font-bold text-slate-900">攻撃属性のマナ</h2>
+              <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-2">
+                <label className="flex items-center justify-start w-36 text-sm">
+                  <span>個数</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={70}
+                    value={manaCount}
+                    onChange={(event) => {
+                      const nextValue = Number(event.target.value || 0);
+                      setManaCount(nextValue);
+                      if (nextValue === 0) {
+                        setManaEnhanced(false);
+                      }
+                    }}
+                    className="w-20 rounded-md border border-slate-300 px-2 py-2"
+                  />
+                </label>
 
-          <div className="space-y-2">
-            {activeSkills.length === 0 && (
-              <p className="text-sm text-slate-500">スキルはまだ追加されていません。</p>
-            )}
-            {activeSkills.map((skill, index) => (
-              <div
-                key={`${skill.item_element}|${skill.item_name}|${skill.item_rarity}|${skill.skill_name}`}
-                className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm"
-              >
-                <span>
-                  {skill.item_name} &gt; {skill.item_rarity}:{skill.skill_name}
-                </span>
-                <Button type="button" variant="ghost" onClick={() => removeActiveSkill(index)}>
-                  削除
+                <label className="flex items-center justify-end px-3 py-2 text-sm">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={manaEnhanced}
+                    aria-label="マナ強化"
+                    disabled={manaCount === 0}
+                    onClick={() => setManaEnhanced((previous) => !previous)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      manaEnhanced ? "bg-green-500" : "bg-slate-300"
+                    } ${manaCount === 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        manaEnhanced ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span>マナ強化</span>
+                </label>
+              </div>
+
+              {!abilityLoading && abilityError && (
+                <div className="text-xs text-red-600">能力情報エラー: {abilityError}</div>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-1.5 text-lg font-bold text-slate-900">
+                起動しているスキル
+                <InfoTooltip content="戦闘中すでに起動しているスキルであり、計算対象の攻撃スキルに適用させたい強化効果などをもつスキル。" />
+              </h2>
+              <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                <SkillSearch
+                  sourceItems={equippedItems}
+                  ownOnly={false}
+                  includeFree
+                  onSelect={setActiveSkillDraft}
+                  placeholder="スキルを検索"
+                />
+                <Button type="button" onClick={addActiveSkill} disabled={!activeSkillDraft}>
+                  追加
                 </Button>
               </div>
-            ))}
-          </div>
-        </section>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-slate-900">バーストストライク・計算対象の攻撃スキル</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="space-y-1 text-sm">
-              <span>バーストストライク</span>
-              <select
-                value={effectiveBurstStrike}
-                onChange={(event) => setBurstStrike(event.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white px-2 py-2"
-              >
-                {burstStrikeOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
+              <div className="space-y-2">
+                {activeSkills.length === 0 && (
+                  <p className="text-sm text-slate-500">スキルはまだ追加されていません。</p>
+                )}
+                {activeSkills.map((skill, index) => (
+                  <div
+                    key={`${skill.item_element}|${skill.item_name}|${skill.item_rarity}|${skill.skill_name}`}
+                    className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span>
+                      {skill.item_name} &gt; {skill.item_rarity}:{skill.skill_name}
+                    </span>
+                    <Button type="button" variant="ghost" onClick={() => removeActiveSkill(index)}>
+                      削除
+                    </Button>
+                  </div>
                 ))}
-              </select>
-            </label>
+              </div>
+            </section>
 
-            <div className="space-y-1 text-sm">
-              <span>計算対象の攻撃スキル</span>
-              <SkillSearch
-                sourceItems={equippedItems}
-                ownOnly
-                attackOnly
-                includeFree={false}
-                onSelect={setTargetSkill}
-                placeholder="スキルを検索"
-              />
-            </div>
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-1.5 text-lg font-bold text-slate-900">
+                バーストストライク
+                <InfoTooltip content="武器固有のバーストストライクを使わない場合は「(無指名のバースト)」を選択してください。" />
+              </h2>
+              <div className="grid gap-3">
+                <label className="space-y-1 text-sm">
+                  <select
+                    value={effectiveBurstStrike}
+                    onChange={(event) => setBurstStrike(event.target.value)}
+                    className="w-full rounded-md border border-slate-300 bg-white px-2 py-2"
+                  >
+                    {burstStrikeOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-900">計算対象</h2>
+              <div className="grid gap-3">
+                <div className="space-y-1 text-sm">
+                  <span>(※攻撃スキル)</span>
+                  <SkillSearch
+                    sourceItems={equippedItems}
+                    ownOnly
+                    attackOnly
+                    includeFree={false}
+                    onSelect={setTargetSkill}
+                    placeholder="スキルを検索"
+                  />
+                </div>
+              </div>
+            </section>
           </div>
 
-          {targetSkill && (
-            <p className="text-xs text-slate-600">
-              計算対象の攻撃スキル: {targetSkill.item_name} &gt; {targetSkill.item_rarity}:{targetSkill.skill_name}
-            </p>
-          )}
-        </section>
+          <div
+            className={`space-y-8 xl:max-h-[calc(100vh-12rem)] xl:overflow-y-auto xl:pr-2 ${
+              activeColumn === "middle" ? "block" : "hidden"
+            } xl:block`}
+          >
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-900">武器</h2>
+              <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
+                <Button
+                  type="button"
+                  variant={activeWeaponPanel === "main" ? "default" : "outline"}
+                  onClick={() => setActiveWeaponPanel("main")}
+                >
+                  Main
+                </Button>
+                <Button
+                  type="button"
+                  variant={activeWeaponPanel === "additional" ? "default" : "outline"}
+                  onClick={() => setActiveWeaponPanel("additional")}
+                >
+                  Additional
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {activeWeaponPanel === "main"
+                  ? mainSlots.map((slot, index) => (
+                      <div key={`main-${index}`}>
+                        {renderSlot(
+                          slot,
+                          setMainSlots,
+                          index,
+                          `${index + 1}/5`,
+                          MAIN_WEAPON_CATEGORIES,
+                          true,
+                          undefined,
+                          "武器種",
+                          `main-${index}`,
+                        )}
+                      </div>
+                    ))
+                  : additionalSlots.map((slot, index) => (
+                      <div key={`additional-${index}`}>
+                        {renderSlot(
+                          slot,
+                          setAdditionalSlots,
+                          index,
+                          `${index + 1}/5`,
+                          ADDITIONAL_WEAPON_CATEGORIES,
+                          false,
+                          undefined,
+                          "武器種",
+                          `additional-${index}`,
+                        )}
+                      </div>
+                    ))}
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-900">シックスセンス (メダル)</h2>
+              <div className="space-y-1 text-sm">
+                <ItemSearch
+                  category="シックスセンス"
+                  onSelect={setMedal}
+                  placeholder="メダルを検索"
+                />
+              </div>
+            </section>
+          </div>
+
+          <div
+            className={`space-y-8 xl:max-h-[calc(100vh-12rem)] xl:overflow-y-auto xl:pr-2 ${
+              activeColumn === "right" ? "block" : "hidden"
+            } xl:block`}
+          >
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-900">防具 / アクセサリー</h2>
+              <div className="space-y-3">
+                {renderSlot(upperArmor, setUpperArmor, null, "上防具", ["上"], false, "上", "アイテム種", "upper-armor")}
+                {renderSlot(lowerArmor, setLowerArmor, null, "下防具", ["下"], false, "下", "アイテム種", "lower-armor")}
+                {renderSlot(headAccessory, setHeadAccessory, null, "頭アクセ", ["頭"], false, "頭", "アイテム種", "head-accessory")}
+                {renderSlot(armAccessory, setArmAccessory, null, "腕アクセ", ["腕"], false, "腕", "アイテム種", "arm-accessory")}
+                {renderSlot(footAccessory, setFootAccessory, null, "足アクセ", ["足"], false, "足", "アイテム種", "foot-accessory")}
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-900">エンブレム</h2>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <button
+                  type="button"
+                  onClick={() => toggleAccordionByKey("sp-emblem")}
+                  className="flex w-full items-center gap-2 text-left font-semibold text-slate-900"
+                  aria-expanded={getIsAccordionExpanded("sp-emblem")}
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    className={`h-4 w-4 shrink-0 transition-transform ${
+                      getIsAccordionExpanded("sp-emblem") ? "rotate-180" : "rotate-0"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>SPエンブレム</span>
+                </button>
+
+                {getIsAccordionExpanded("sp-emblem") && (
+                  <>
+                    <ItemSearch
+                      category="エンブレム"
+                      series="SP"
+                      onSelect={(item) =>
+                        setSpEmblem((previous) => ({ ...previous, item }))
+                      }
+                      placeholder="SPエンブレムを検索"
+                    />
+
+                    {spEmblem.effects.map((effect, effectIndex) => (
+                      <div key={`sp-effect-${effectIndex}`} className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
+                        <select
+                          className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
+                          value={effect.effect}
+                          onChange={(event) =>
+                            setSpEmblem((previous) => ({
+                              ...previous,
+                              effects: previous.effects.map((entry, index) =>
+                                index === effectIndex
+                                  ? { ...entry, effect: event.target.value }
+                                  : entry,
+                              ),
+                            }))
+                          }
+                          disabled={!spEmblem.item}
+                        >
+                          {EMBLEM_EFFECT_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
+                          placeholder="効果量"
+                          value={effect.amount}
+                          onChange={(event) =>
+                            setSpEmblem((previous) => ({
+                              ...previous,
+                              effects: previous.effects.map((entry, index) =>
+                                index === effectIndex
+                                  ? { ...entry, amount: event.target.value }
+                                  : entry,
+                              ),
+                            }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <button
+                  type="button"
+                  onClick={() => toggleAccordionByKey("ex-emblem")}
+                  className="flex w-full items-center gap-2 text-left font-semibold text-slate-900"
+                  aria-expanded={getIsAccordionExpanded("ex-emblem")}
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    className={`h-4 w-4 shrink-0 transition-transform ${
+                      getIsAccordionExpanded("ex-emblem") ? "rotate-180" : "rotate-0"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>EXエンブレム</span>
+                </button>
+
+                {getIsAccordionExpanded("ex-emblem") && (
+                  <>
+                    <ItemSearch
+                      category="エンブレム"
+                      series="EX"
+                      onSelect={(item) =>
+                        setExEmblem((previous) => ({ ...previous, item }))
+                      }
+                      placeholder="EXエンブレムを検索"
+                    />
+
+                    {exEmblem.effects.map((effect, effectIndex) => (
+                      <div key={`ex-effect-${effectIndex}`} className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
+                        <select
+                          className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
+                          value={effect.effect}
+                          onChange={(event) =>
+                            setExEmblem((previous) => ({
+                              ...previous,
+                              effects: previous.effects.map((entry, index) =>
+                                index === effectIndex
+                                  ? { ...entry, effect: event.target.value }
+                                  : entry,
+                              ),
+                            }))
+                          }
+                          disabled={!exEmblem.item}
+                        >
+                          {EMBLEM_EFFECT_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
+                          placeholder="効果量"
+                          value={effect.amount}
+                          onChange={(event) =>
+                            setExEmblem((previous) => ({
+                              ...previous,
+                              effects: previous.effects.map((entry, index) =>
+                                index === effectIndex
+                                  ? { ...entry, amount: event.target.value }
+                                  : entry,
+                              ),
+                            }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <button
+                  type="button"
+                  onClick={() => toggleAccordionByKey("emblem-status")}
+                  className="flex w-full items-center gap-2 text-left font-semibold text-slate-900"
+                  aria-expanded={getIsAccordionExpanded("emblem-status")}
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    className={`h-4 w-4 shrink-0 transition-transform ${
+                      getIsAccordionExpanded("emblem-status") ? "rotate-180" : "rotate-0"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>エンブレムステータス（14種）</span>
+                </button>
+
+                {getIsAccordionExpanded("emblem-status") && (
+                  <div className="grid gap-2 md:grid-cols-8 xl:grid-cols-2">
+                    {STATUS_KEYS.map((statusKey) => (
+                      <label key={statusKey} className="space-y-1 text-sm">
+                        <span>{statusKey}</span>
+                        <input
+                          className="w-full rounded-md border border-slate-300 bg-white px-2 py-2"
+                          type="number"
+                          value={statusValues[statusKey]}
+                          onChange={(event) =>
+                            setStatusValues((previous) => ({
+                              ...previous,
+                              [statusKey]: Number(event.target.value || 0),
+                            }))
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
 
         {/* {result && (
           <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">

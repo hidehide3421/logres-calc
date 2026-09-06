@@ -126,7 +126,7 @@ export function SkillSearch({
       <PopoverContent className="w-[480px] p-0">
         <Command>
           <CommandInput
-            placeholder="アイテム名またはスキル名を入力..."
+            placeholder="アイテム名を入力..."
             value={query}
             onValueChange={(q: string) => {
               setQuery(q);
